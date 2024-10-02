@@ -260,27 +260,32 @@ class FrequencyTable:
 
         def refresh_ports():
             port_listbox.delete(0, tk.END)
-            ports = list(serial.tools.list_ports.comports())
-            for port in ports:
+            self.ports = list(serial.tools.list_ports.comports())
+            for port in self.ports:
                 port_listbox.insert(tk.END, f"{port.device} - {port.description}")
-            if not ports:
+            if not self.ports:
                 port_listbox.insert(tk.END, "Немає портів")
 
         refresh_ports()
 
-        def on_select():
+        def on_select(event=None):
             selection = port_listbox.curselection()
             if selection:
-                ports = list(serial.tools.list_ports.comports())
-                selected_port = ports[selection[0]].device
+                selected_port = self.ports[selection[0]].device
                 self.set_arduino_port(selected_port)
                 port_window.destroy()
+
+        port_listbox.bind("<Double-1>", on_select)  # Bind double-click event
 
         select_button = ttk.Button(port_window, text="Вибрати", command=on_select)
         select_button.pack(pady=5)
 
         refresh_button = ttk.Button(port_window, text="Оновити", command=refresh_ports)
         refresh_button.pack(pady=5)
+
+        port_window.transient(self.master)  # Set to be on top of the main window
+        port_window.grab_set()  # Make the window modal
+        self.master.wait_window(port_window)  # Wait for the window to be destroyed
 
     def set_arduino_port(self, port):
         self.arduino_port = port
