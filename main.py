@@ -37,7 +37,8 @@ class FrequencyTable:
         self.create_table()
         self.create_control_panel()
         self.load_settings()
-        self.load_arduino()
+        if self.arduino_port:
+            self.load_arduino()
 
     def load_arduino(self):
         """Initializes serial connection to Arduino."""
@@ -128,6 +129,13 @@ class FrequencyTable:
                 self.set_active_cell(row, col, show_message=False)
                 self.save_settings()  # Save settings after changing frequency
         else:
+            if not self.arduino_port:
+                messagebox.showerror(
+                    "Помилка",
+                    "Не вибрано порт Ардуїно. Будь ласка виберіть порт ардуїно клацнувши у правому нижньому куті.",
+                )
+                return
+
             self.navigate_to_cell(row, col)
 
     def set_active_cell(self, row, col, show_message=True):
@@ -179,12 +187,6 @@ class FrequencyTable:
         self.set_active_cell(target_row, target_col, show_message=False)
 
     def send_commands_to_arduino(self, commands):
-        if not self.arduino_port:
-            messagebox.showerror(
-                "Помилка",
-                "Не вибрано порт Ардуїно. Будь ласка виберіть порт ардуїно клацнувши у правому нижньому куті.",
-            )
-            return
         if self.ser is None:
             self.load_arduino()
         # self.ser = serial.Serial(self.arduino_port, 9600, timeout=3)
@@ -294,6 +296,7 @@ class FrequencyTable:
         self.arduino_port = port
         self.save_settings()
         self.update_port_label()
+        self.load_arduino()
 
     def update_port_label(self):
         if self.arduino_port:
