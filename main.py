@@ -4,15 +4,19 @@ import json
 import serial
 import serial.tools.list_ports
 import time
+import os
 
 from utils.position_window import position_window_at_centre
-from utils.path import resource_path
+from utils.path import resource_path, get_user_data_dir
 
 
 class FrequencyTable:
     def __init__(self, master):
         self.master = master
         self.master.title("Перемикач частот-2000")
+
+        self.user_data_dir = get_user_data_dir()
+        os.makedirs(self.user_data_dir, exist_ok=True)
 
         self.default_frequencies = {
             "BAND A": [5865, 5845, 5825, 5805, 5785, 5765, 5745, 5725],
@@ -221,17 +225,36 @@ class FrequencyTable:
         messagebox.showinfo("Зберегти", "Таблиця частот була збережена успішно!")
 
     def load_settings(self):
+        settings_path = os.path.join(self.user_data_dir, "settings.json")
         try:
-            with open("settings.json", "r") as f:
+            with open(settings_path, "r") as f:
                 settings = json.load(f)
                 self.arduino_port = settings.get("arduino_port")
                 self.active_cell = tuple(settings.get("active_cell", (0, 0)))
                 self.frequencies = settings.get("frequencies", self.default_frequencies)
         except FileNotFoundError:
             self.frequencies = self.default_frequencies
+        except json.JSONDecodeError:
+            messagebox.showwarning(
+                "Warning", "Settings file is corrupted. Using default settings."
+            )
+            self.frequencies = self.default_frequencies
         self.update_port_label()
         self.update_active_cell()
         self.update_frequency_display()
+
+    def save_settings(self):
+        settings_path = os.path.join(self.user_data_dir, "settings.json")
+        settings = {
+            "arduino_port": self.arduino_port,
+            "active_cell": self.active_cell,
+            "frequencies": self.frequencies,
+        }
+        try:
+            with open(settings_path, "w") as f:
+                json.dump(settings, f)
+        except IOError as e:
+            messagebox.showerror("Error", f"Failed to save settings: {str(e)}")
 
     def update_active_cell(self):
         for row in range(self.number_of_rows):
@@ -245,15 +268,6 @@ class FrequencyTable:
         for row in range(self.number_of_rows):
             for col, band in enumerate(self.frequencies.keys()):
                 self.buttons[row][col].config(text=str(self.frequencies[band][row]))
-
-    def save_settings(self):
-        settings = {
-            "arduino_port": self.arduino_port,
-            "active_cell": self.active_cell,
-            "frequencies": self.frequencies,
-        }
-        with open("settings.json", "w") as f:
-            json.dump(settings, f)
 
     def show_port_selection(self):
         port_window = tk.Toplevel(self.master)
