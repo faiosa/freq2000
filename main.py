@@ -53,6 +53,7 @@ class FrequencyTable:
                 )
 
     def create_table(self):
+        """Creates the table of buttons."""
         table_frame = ttk.Frame(self.master)
         table_frame.pack(padx=10, pady=10)
 
@@ -85,6 +86,7 @@ class FrequencyTable:
         self.update_active_cell()
 
     def create_control_panel(self):
+        """Creates the control panel for editing and saving the table."""
         self.control_frame = ttk.Frame(self.master)
         self.control_frame.pack(pady=10, fill=tk.X)
 
@@ -183,7 +185,8 @@ class FrequencyTable:
                 "Не вибрано порт Ардуїно. Будь ласка виберіть порт ардуїно клацнувши у правому нижньому куті.",
             )
             return
-
+        if self.ser is None:
+            self.load_arduino()
         # self.ser = serial.Serial(self.arduino_port, 9600, timeout=3)
         for command in commands:
             self.ser.write(str(command).encode())
@@ -301,7 +304,6 @@ class FrequencyTable:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.geometry(position_window_at_centre(root, width=720, height=470))
     root.iconphoto(False, PhotoImage(file=resource_path("assets/icon.png")))
     app = FrequencyTable(root)
     root.mainloop()
